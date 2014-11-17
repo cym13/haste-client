@@ -29,6 +29,13 @@ Text can be passed to `haste` via stdin or a file. TTY is also supported.
 
 URL of the created entry is then printed to STDOUT.
 
+To download a file, just give its url to haste, eventually with a destination
+
+    haste 'http://hastebin.com/puwitoduwe'
+    haste -o haste.py 'http://hastebin.com/puwitoduwe'
+
+The name of the output file is then printed to STDOUT
+
 
 ## Configuration
 

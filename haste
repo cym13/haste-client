@@ -10,14 +10,14 @@ Usage:
 
 -             read from stdin.
 FILE          read from a file
-              if FILE is an hastebin url, download the file
+              if FILE is a hastebin url, download the file
 
 -h --help           show this message.
 -v --version        show version information.
 -r --raw            return a URL to the raw paste data.
 -o --output NAME    name of the output file when downloading
 """
-__version__ = '1.1.0'
+__version__ = '1.0.1'
 
 import sys
 # For Python 2 set default encoding to 'UTF-8' instead of 'ascii'.
@@ -92,7 +92,7 @@ def download_snippet(url, destination, timeout):
     if response.ok:
         try:
             open(expanduser(destination), "w").write(response.text)
-            print("Saved as: %s" % destination)
+            print(destination)
         except PermissionError as e:
             exit("Error: permission denied")
 
