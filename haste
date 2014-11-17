@@ -6,16 +6,18 @@ haste - a CLI client for Haste server.
 
 Usage:
     haste [-r] [-]
-    haste [-r] FILE
+    haste [-r] [-o NAME] FILE
 
 -             read from stdin.
-FILE          read from a file.
+FILE          read from a file
+              if FILE is an hastebin url, download the file
 
--h --help     show this message.
--v --version  show version information.
--r --raw      return a URL to the raw paste data.
+-h --help           show this message.
+-v --version        show version information.
+-r --raw            return a URL to the raw paste data.
+-o --output NAME    name of the output file when downloading
 """
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 import sys
 # For Python 2 set default encoding to 'UTF-8' instead of 'ascii'.
@@ -40,11 +42,18 @@ DEFAULTS = {
 
 def main(**kwargs):
     config = load_config()
-    filesrc = kwargs['FILE'] and kwargs['FILE'] != '-'
-    data = read_file(kwargs['FILE']) if filesrc else read_stdin()
 
-    url = create_snippet(data, config['server_url'], config['timeout'], kwargs['--raw'])
-    print(url)
+    if kwargs['FILE'] and config['server_url'].split('/')[-1] in kwargs['FILE']:
+        download_snippet(kwargs['FILE'], kwargs['--output'], config['timeout'])
+
+    else:
+        filesrc = kwargs['FILE'] and kwargs['FILE'] != '-'
+        data = read_file(kwargs['FILE']) if filesrc else read_stdin()
+        url = create_snippet(data,
+                             config['server_url'],
+                             config['timeout'],
+                             kwargs['--raw'])
+        print(url)
 
 
 def create_snippet(data, baseurl, timeout, raw):
@@ -60,6 +69,35 @@ def create_snippet(data, baseurl, timeout, raw):
 
     dockey = json.loads(response.text)['key']
     return baseurl + ("/raw/" if raw else "/") + dockey
+
+
+def download_snippet(url, destination, timeout):
+    """
+    Download the snippet from `url' to `destination'
+    """
+    server, raw, snip_id = url.split('/')[-3:]
+    if server == "":
+        server = raw
+
+    dl_url = "http://%s/raw/%s" % (server, snip_id)
+
+    try:
+        response = requests.get(dl_url, timeout=timeout)
+    except Timeout:
+        exit("Error: connection timed out")
+
+    if destination is None:
+        destination = "%s.txt" % snip_id
+
+    if response.ok:
+        try:
+            open(expanduser(destination), "w").write(response.text)
+            print("Saved as: %s" % destination)
+        except PermissionError as e:
+            exit("Error: permission denied")
+
+    else:
+        exit("Error: page not found")
 
 
 def read_stdin():
